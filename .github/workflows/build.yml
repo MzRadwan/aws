@@ -50,7 +50,7 @@ jobs:
           push: true
           tags: |
             mzradwan/pwcho_zadanie2:latest          
-            ghcr.io/mzradwan/PwChO_Zadanie2:latest
+            ghcr.io/mzradwan/pwcho_zadanie2:latest
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
       
