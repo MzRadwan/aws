@@ -12,8 +12,8 @@
 docker buildx build -t mzradwan/pwcho_zadanie2:latest --platform linux/arm/v7,linux/arm64/v8,linux/amd64 --push .
 ```
 * b. Aby uruchomić kontener należy użyć  
+```
 docker run --name http-server -p 8083:8083 ghcr.io/mzradwan/pwcho_zadanie2:latest
-
 ```
 lub 
 ```
