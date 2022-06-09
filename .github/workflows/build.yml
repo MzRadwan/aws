@@ -9,14 +9,6 @@ jobs:
     name: Budowa i publikacja obrazw na repozytorium
     runs-on: ubuntu-latest
     steps:
-      - name: Cache Docker layers
-        uses: actions/cache@v2
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-single-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-single-buildx
-
       - name: Checkout code
         uses: actions/checkout@v2
 
@@ -26,35 +18,36 @@ jobs:
       - name: Buildx set-up
         id: buildx
         uses: docker/setup-buildx-action@v1
-
-      - name: Login to GHCR
-        uses: docker/login-action@v1
+   
+      - name: Run String Replace
+        uses: frabert/replace-string-action@master
+        id: format-time
         with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUBACCESSTOKEN }}
+          pattern: '[:\.]+'
+          string: "${{ steps.current-time.outputs.time }}"
+          replace-with: '-'
+          flags: 'g'     
 
-      - name: Login to DockerHub
-        uses: docker/login-action@v1 
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-          
       - name: Build and push to dockerhub
         id: docker_build
         uses: docker/build-push-action@v2
         with:
           context: ./
           platforms: linux/arm/v7,linux/arm64/v8,linux/amd64
-          file: ./dockerfile  
-          push: true
-          tags: |
-            mzradwan/pwcho_zadanie2:latest          
-            ghcr.io/mzradwan/pwcho_zadanie2:latest
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new
-      
-      - name: Transporting cache
-        run: |
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+          file: ./dockerfile 
+
+      - name: Generate deployment package
+        run: zip -r deploy.zip . -x '*.git*'
+
+      - name: Deploy to EB
+        uses: einaregilsson/beanstalk-deploy@v20
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_KEY }}
+          application_name: pfcho
+          environment_name: Pfcho-env
+          existing_bucket_name: elasticbeanstalk-us-east-1-236655117972
+          version_label: "docker-app-${{ steps.format-time.outputs.replaced }}"
+          region: us-east-1
+          deployment_package: deploy.zip 
+
