@@ -16,7 +16,7 @@ jobs:
           key: ${{ runner.os }}-single-buildx-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-single-buildx
-                
+
       - name: Checkout code
         uses: actions/checkout@v2
 
@@ -26,15 +26,6 @@ jobs:
       - name: Buildx set-up
         id: buildx
         uses: docker/setup-buildx-action@v1
-   
-      - name: Run String Replace
-        uses: frabert/replace-string-action@master
-        id: format-time
-        with:
-          pattern: '[:\.]+'
-          string: "${{ steps.current-time.outputs.time }}"
-          replace-with: '-'
-          flags: 'g'     
 
       - name: Login to GHCR
         uses: docker/login-action@v1
@@ -66,6 +57,15 @@ jobs:
       - name: Generate deployment package
         run: zip -r deploy.zip . -x '*.git*'
 
+      - name: Run String Replace
+        uses: frabert/replace-string-action@master
+        id: format-time
+        with:
+          pattern: '[:\.]+'
+          string: "${{ steps.current-time.outputs.time }}"
+          replace-with: '-'
+          flags: 'g'     
+          
       - name: Deploy to EB
         uses: einaregilsson/beanstalk-deploy@v20
         with:
